@@ -1,0 +1,67 @@
+{% extends 'base.html' %}
+{% block title %}Novo Plantão{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Agenda operacional</p>
+    <h2>Cadastrar plantão de monitoria</h2>
+  </div>
+</section>
+
+<section class="section-card">
+  <form method="post" class="form-grid two-columns">
+    {% if current_user.role == 'admin' %}
+      <label>
+        <span>Monitor</span>
+        <select name="monitor_id" required>
+          {% for monitor in monitors %}
+            <option value="{{ monitor.id }}">{{ monitor.full_name }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    {% endif %}
+    <label>
+      <span>Disciplina</span>
+      <select name="discipline_id" required>
+        {% for discipline in disciplines %}
+          <option value="{{ discipline.id }}">{{ discipline.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>Turma</span>
+      <select name="class_group_id">
+        <option value="">Sem turma</option>
+        {% for group in class_groups %}
+          <option value="{{ group.id }}">{{ group.name }} - {{ group.semester_label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>Título</span>
+      <input type="text" name="title" required>
+    </label>
+    <label>
+      <span>Capacidade</span>
+      <input type="number" name="capacity" min="1" value="10">
+    </label>
+    <label>
+      <span>Início</span>
+      <input type="datetime-local" name="start_at" required>
+    </label>
+    <label>
+      <span>Fim</span>
+      <input type="datetime-local" name="end_at" required>
+    </label>
+    <label>
+      <span>Local</span>
+      <input type="text" name="location">
+    </label>
+    <label class="full-span">
+      <span>Observações</span>
+      <textarea name="notes" rows="4"></textarea>
+    </label>
+    <button type="submit" class="button button-primary">Salvar plantão</button>
+  </form>
+</section>
+{% endblock %}

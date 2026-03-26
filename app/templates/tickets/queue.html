@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+{% block title %}Fila Inteligente{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Fila inteligente de monitoria</p>
+    <h2>Priorização por urgência, curso e contexto</h2>
+  </div>
+</section>
+
+<section class="section-card">
+  <form method="get" class="form-inline">
+    <label>
+      <span>Curso</span>
+      <select name="course_id">
+        <option value="">Todos</option>
+        {% for course in courses %}
+          <option value="{{ course.id }}" {% if request.args.get('course_id', '')|int == course.id %}selected{% endif %}>{{ course.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>Disciplina</span>
+      <select name="discipline_id">
+        <option value="">Todas</option>
+        {% for discipline in disciplines %}
+          <option value="{{ discipline.id }}" {% if request.args.get('discipline_id', '')|int == discipline.id %}selected{% endif %}>{{ discipline.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>Tema</span>
+      <select name="topic_id">
+        <option value="">Todos</option>
+        {% for topic in topics %}
+          <option value="{{ topic.id }}" {% if request.args.get('topic_id', '')|int == topic.id %}selected{% endif %}>{{ topic.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>Status</span>
+      <select name="status">
+        <option value="">Todos</option>
+        {% for value, label in ticket_statuses %}
+          <option value="{{ value }}" {% if request.args.get('status') == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="button button-secondary">Filtrar</button>
+  </form>
+</section>
+
+<section class="section-card">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Prioridade</th>
+          <th>Curso</th>
+          <th>Disciplina</th>
+          <th>Tema</th>
+          <th>Aluno</th>
+          <th>Status</th>
+          <th>Prazo</th>
+          <th>Responsável</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ticket in tickets %}
+          <tr>
+            <td>{{ ticket.priority_score }}</td>
+            <td>{{ ticket.course.name if ticket.course else '-' }}</td>
+            <td>{{ ticket.discipline.name }}</td>
+            <td>{{ ticket.topic.name }}</td>
+            <td>{{ ticket.student.full_name }}</td>
+            <td><span class="status-pill status-{{ ticket.status }}">{{ label_from(ticket_statuses, ticket.status) }}</span></td>
+            <td>{{ ticket.deadline.strftime('%d/%m %H:%M') if ticket.deadline else '-' }}</td>
+            <td>{{ ticket.assigned_monitor.full_name if ticket.assigned_monitor else 'Não definido' }}</td>
+            <td><a href="{{ url_for('tickets.ticket_detail', ticket_id=ticket.id) }}">Abrir</a></td>
+          </tr>
+        {% else %}
+          <tr><td colspan="9">Nenhum ticket encontrado para os filtros atuais.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends 'base.html' %}
+{% block title %}Novo Item da Base{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Curadoria de conteúdo</p>
+    <h2>Adicionar item à base de conhecimento</h2>
+  </div>
+</section>
+
+<section class="section-card">
+  <form method="post" class="form-grid two-columns">
+    <label>
+      <span>Disciplina</span>
+      <select name="discipline_id" required>
+        {% for discipline in disciplines %}
+          <option value="{{ discipline.id }}">{{ discipline.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>Tema</span>
+      <select name="topic_id">
+        <option value="">Sem tema específico</option>
+        {% for topic in topics %}
+          <option value="{{ topic.id }}">{{ topic.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>Título</span>
+      <input type="text" name="title" required>
+    </label>
+    <label>
+      <span>Tipo do item</span>
+      <input type="text" name="item_type" placeholder="faq, roteiro, pdf, video" required>
+    </label>
+    <label class="full-span">
+      <span>Conteúdo</span>
+      <textarea name="content" rows="6" required></textarea>
+    </label>
+    <label>
+      <span>Link opcional</span>
+      <input type="url" name="link_url">
+    </label>
+    <label>
+      <span>Tags</span>
+      <input type="text" name="tags" placeholder="tema,tag,conceito">
+    </label>
+    <label><input type="checkbox" name="official"> <span>Material oficial</span></label>
+    {% if current_user.role in ['teacher', 'admin'] %}
+      <label><input type="checkbox" name="validated"> <span>Validar imediatamente</span></label>
+    {% endif %}
+    <button type="submit" class="button button-primary">Salvar item</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}Entrar | Monitoria Inteligente{% endblock %}
+{% block content %}
+<section class="auth-shell">
+  <article class="auth-card">
+    <p class="eyebrow">Acesso institucional</p>
+    <h2>Entrar na plataforma</h2>
+    <form method="post" class="form-grid">
+      <label>
+        <span>Usuário</span>
+        <input type="text" name="username" required>
+      </label>
+      <label>
+        <span>Senha</span>
+        <input type="password" name="password" required>
+      </label>
+      <button type="submit" class="button button-primary">Entrar</button>
+    </form>
+    <p class="helper-text">Entre com suas credenciais institucionais para acessar o ambiente acadêmico.</p>
+  </article>
+</section>
+{% endblock %}

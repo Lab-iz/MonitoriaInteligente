@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard Pedagógico/Admin{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Painel institucional</p>
+    <h2>Indicadores globais de monitoria e permanência</h2>
+  </div>
+  <a class="button button-primary" href="{{ url_for('admin.management') }}">Gerenciar cadastros</a>
+</section>
+
+<section class="metric-grid four-up">
+  <article class="metric-card">
+    <span class="metric-label">Usuários</span>
+    <strong class="metric-value">{{ data.total_users }}</strong>
+  </article>
+  <article class="metric-card">
+    <span class="metric-label">Dúvidas totais</span>
+    <strong class="metric-value">{{ data.total_tickets }}</strong>
+  </article>
+  <article class="metric-card">
+    <span class="metric-label">Dúvidas em aberto</span>
+    <strong class="metric-value">{{ data.open_tickets }}</strong>
+  </article>
+  <article class="metric-card accent">
+    <span class="metric-label">Pré-atendimentos úteis</span>
+    <strong class="metric-value">{{ data.ai_resolved }}</strong>
+  </article>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card">
+    <span class="metric-label">Média até primeira resposta</span>
+    <strong class="metric-value">{{ data.avg_first_response_hours }} h</strong>
+  </article>
+  <article class="metric-card">
+    <span class="metric-label">Média até resolução</span>
+    <strong class="metric-value">{{ data.avg_resolution_hours }} h</strong>
+  </article>
+</section>
+
+<section class="dashboard-grid">
+  <article class="section-card">
+    <div class="section-heading">
+      <h3>Gargalos por disciplina</h3>
+    </div>
+    <canvas data-chart="bar" data-chart-label="Dúvidas" data-chart-values='{{ data.discipline_load|tojson }}'></canvas>
+  </article>
+  <article class="section-card">
+    <div class="section-heading">
+      <h3>Cobertura de monitoria</h3>
+    </div>
+    <canvas data-chart="bar" data-chart-label="Monitores" data-chart-values='{{ data.coverage|tojson }}'></canvas>
+  </article>
+</section>
+
+<section class="section-card">
+  <div class="section-heading">
+    <h3>Alertas de risco</h3>
+  </div>
+  <div class="list-grid">
+    {% for alert in data.alerts %}
+      <article class="mini-card priority-{{ alert.level }}">
+        <p class="mini-meta">{{ alert.level|upper }}</p>
+        <h4>{{ alert.student.full_name }}</h4>
+        <p>{{ alert.reason }}</p>
+      </article>
+    {% else %}
+      <p class="muted">Nenhum alerta ativo.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard do Professor{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Painel docente</p>
+    <h2>Recorrência por conteúdo e apoio à monitoria</h2>
+  </div>
+  <a class="button button-primary" href="{{ url_for('reports.index') }}">Exportar relatórios</a>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card accent">
+    <span class="metric-label">Taxa de resolução</span>
+    <strong class="metric-value">{{ data.resolution_rate }}%</strong>
+  </article>
+</section>
+
+<section class="dashboard-grid">
+  <article class="section-card">
+    <div class="section-heading">
+      <h3>Temas críticos</h3>
+    </div>
+    <canvas data-chart="bar" data-chart-label="Ocorrências" data-chart-values='{{ data.topic_counts|tojson }}'></canvas>
+  </article>
+  <article class="section-card">
+    <div class="section-heading">
+      <h3>Alunos com maior recorrência</h3>
+    </div>
+    <div class="list-grid">
+      {% for student in data.recurring_students %}
+        <article class="mini-card">
+          <h4>{{ student.label }}</h4>
+          <p>{{ student.value }} dúvidas registradas</p>
+        </article>
+      {% else %}
+        <p class="muted">Sem dados suficientes.</p>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+
+<section class="section-card">
+  <div class="section-heading">
+    <h3>Itens pendentes de validação</h3>
+    <a href="{{ url_for('knowledge.create') }}">Novo item</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Título</th>
+          <th>Disciplina</th>
+          <th>Situação</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in data.pending_kb %}
+          <tr>
+            <td>{{ item.title }}</td>
+            <td>{{ item.discipline.name }}</td>
+            <td>{{ 'Validado' if item.validated else 'Pendente' }}</td>
+            <td>
+              {% if not item.validated %}
+                <form method="post" action="{{ url_for('knowledge.validate_item', item_id=item.id) }}">
+                  <button class="button button-small" type="submit">Validar</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% else %}
+          <tr><td colspan="4">Nenhum item pendente.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

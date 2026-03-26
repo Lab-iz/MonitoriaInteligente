@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+{% block title %}Nova Dúvida{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Abertura de dúvida</p>
+    <h2>Registrar uma nova solicitação</h2>
+  </div>
+</section>
+
+<section class="section-card">
+  <form method="post" enctype="multipart/form-data" class="form-grid two-columns" data-ticket-form>
+    <label>
+      <span>Curso</span>
+      <select name="course_id" id="course_id" required>
+        {% for course in courses %}
+          <option value="{{ course.id }}">{{ course.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>Disciplina</span>
+      <select name="discipline_id" id="discipline_id" required>
+        {% for discipline in disciplines %}
+          <option value="{{ discipline.id }}" data-course="{{ discipline.course_id }}">{{ discipline.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>Tema</span>
+      <select name="topic_id" id="topic_id" required>
+        {% for topic in topics %}
+          <option value="{{ topic.id }}" data-discipline="{{ topic.discipline_id }}">{{ topic.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>Turma</span>
+      <select name="class_group_id" id="class_group_id">
+        <option value="">Sem turma</option>
+        {% for group in class_groups %}
+          <option value="{{ group.id }}" data-course="{{ group.course_id }}">{{ group.name }} - {{ group.semester_label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>Tipo de dúvida</span>
+      <select name="question_type" required>
+        {% for value, label in question_types %}
+          <option value="{{ value }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      <span>Urgência</span>
+      <select name="urgency" required>
+        {% for value, label in urgency_levels %}
+          <option value="{{ value }}">{{ label }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label class="full-span">
+      <span>Título</span>
+      <input type="text" name="title" required>
+    </label>
+    <label class="full-span">
+      <span>Descrição</span>
+      <textarea name="description" rows="6" required></textarea>
+    </label>
+    <label class="full-span">
+      <span>Tentativa prévia do estudante</span>
+      <textarea name="prior_attempt" rows="4"></textarea>
+    </label>
+    <label>
+      <span>Prazo relacionado</span>
+      <input type="datetime-local" name="deadline">
+    </label>
+    <label>
+      <span>Anexo opcional</span>
+      <input type="file" name="attachment">
+    </label>
+    <button type="submit" class="button button-primary">Enviar para triagem</button>
+  </form>
+</section>
+{% endblock %}

@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Plantões{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Agenda de monitoria</p>
+    <h2>Próximos plantões cadastrados</h2>
+  </div>
+  {% if current_user.role in ['monitor', 'admin'] %}
+    <a class="button button-primary" href="{{ url_for('shifts.create') }}">Novo plantão</a>
+  {% endif %}
+</section>
+
+<section class="list-grid">
+  {% for shift in shifts %}
+    <article class="section-card">
+      <div class="section-heading">
+        <h3>{{ shift.title }}</h3>
+        <span class="tag">{{ shift.discipline.name }}</span>
+      </div>
+      <p><strong>Monitor:</strong> {{ shift.monitor.full_name }}</p>
+      <p><strong>Início:</strong> {{ shift.start_at.strftime('%d/%m/%Y %H:%M') }}</p>
+      <p><strong>Fim:</strong> {{ shift.end_at.strftime('%d/%m/%Y %H:%M') }}</p>
+      <p><strong>Local:</strong> {{ shift.location or 'Não informado' }}</p>
+      <p>{{ shift.notes or 'Sem observações adicionais.' }}</p>
+    </article>
+  {% else %}
+    <p class="muted">Nenhum plantão cadastrado.</p>
+  {% endfor %}
+</section>
+{% endblock %}

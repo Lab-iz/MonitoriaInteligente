@@ -1,0 +1,93 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard do Monitor{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Painel de monitoria</p>
+    <h2>Fila priorizada e atendimento pedagógico</h2>
+  </div>
+  <a class="button button-primary" href="{{ url_for('tickets.queue') }}">Abrir fila completa</a>
+</section>
+
+<section class="metric-grid">
+  <article class="metric-card">
+    <span class="metric-label">Casos em acompanhamento</span>
+    <strong class="metric-value">{{ data.in_service }}</strong>
+  </article>
+  <article class="metric-card">
+    <span class="metric-label">Tempo médio de atendimento</span>
+    <strong class="metric-value">{{ data.avg_duration }} min</strong>
+  </article>
+  <article class="metric-card accent">
+    <span class="metric-label">Plantões futuros</span>
+    <strong class="metric-value">{{ data.upcoming_shifts|length }}</strong>
+  </article>
+</section>
+
+<section class="dashboard-grid">
+  <article class="section-card">
+    <div class="section-heading">
+      <h3>Fila prioritária</h3>
+      <a href="{{ url_for('tickets.queue') }}">Ver tudo</a>
+    </div>
+    <div class="list-grid">
+      {% for ticket in data.queue %}
+        <article class="mini-card priority-{{ 'high' if ticket.priority_score >= 12 else 'medium' }}">
+          <p class="mini-meta">{{ ticket.course.name if ticket.course else '-' }} • {{ ticket.discipline.name }} • prioridade {{ ticket.priority_score }}</p>
+          <h4>{{ ticket.title }}</h4>
+          <p>{{ ticket.student.full_name }}</p>
+          <a href="{{ url_for('tickets.ticket_detail', ticket_id=ticket.id) }}">Abrir atendimento</a>
+        </article>
+      {% else %}
+        <p class="muted">Nenhuma dúvida aguardando atendimento nas suas disciplinas.</p>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="section-card">
+    <div class="section-heading">
+      <h3>Próximos plantões</h3>
+      <a href="{{ url_for('shifts.create') }}">Cadastrar plantão</a>
+    </div>
+    <div class="list-grid">
+      {% for shift in data.upcoming_shifts %}
+        <article class="mini-card">
+          <h4>{{ shift.title }}</h4>
+          <p>{{ shift.start_at.strftime('%d/%m/%Y %H:%M') }}</p>
+          <p>{{ shift.location or 'Sem local informado' }}</p>
+        </article>
+      {% else %}
+        <p class="muted">Nenhum plantão cadastrado.</p>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+
+<section class="section-card">
+  <div class="section-heading">
+    <h3>Histórico recente de intervenções</h3>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Ticket</th>
+          <th>Intervenção</th>
+          <th>Duração</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for response in data.history %}
+          <tr>
+            <td><a href="{{ url_for('tickets.ticket_detail', ticket_id=response.ticket.id) }}">{{ response.ticket.title }}</a></td>
+            <td>{{ label_from(intervention_types, response.intervention_type) }}</td>
+            <td>{{ response.duration_minutes }} min</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="3">Sem atendimentos registrados.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

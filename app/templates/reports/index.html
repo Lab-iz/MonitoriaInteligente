@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Relatórios{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Relatórios institucionais</p>
+    <h2>Exportação CSV e evidências da monitoria</h2>
+  </div>
+</section>
+
+<section class="grid-section three-up">
+  {% for key, label in report_labels.items() %}
+    <article class="section-card">
+      <h3>{{ label }}</h3>
+      <p>Gerar arquivo CSV a partir dos dados atuais do sistema.</p>
+      <a class="button button-primary" href="{{ url_for('reports.export', report_type=key) }}">Exportar CSV</a>
+    </article>
+  {% endfor %}
+</section>
+
+<section class="section-card">
+  <div class="section-heading">
+    <h3>Histórico recente de exportações</h3>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Relatório</th>
+          <th>Gerado por</th>
+          <th>Data</th>
+          <th>Arquivo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for snapshot in snapshots %}
+          <tr>
+            <td>{{ snapshot.name }}</td>
+            <td>{{ snapshot.generated_by.full_name }}</td>
+            <td>{{ snapshot.created_at.strftime('%d/%m/%Y %H:%M') }}</td>
+            <td>{{ snapshot.csv_path.split('\\')[-1] }}</td>
+          </tr>
+        {% else %}
+          <tr><td colspan="4">Nenhuma exportação gerada ainda.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

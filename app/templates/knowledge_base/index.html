@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Base de Conhecimento{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div>
+    <p class="eyebrow">Base de conhecimento disciplinar</p>
+    <h2>Materiais, respostas validadas e apoio ao pré-atendimento</h2>
+  </div>
+  {% if current_user.role in ['monitor', 'teacher', 'admin'] %}
+    <a class="button button-primary" href="{{ url_for('knowledge.create') }}">Novo item</a>
+  {% endif %}
+</section>
+
+<section class="section-card">
+  <form method="get" class="form-inline">
+    <label>
+      <span>Buscar</span>
+      <input type="text" name="q" value="{{ request.args.get('q', '') }}" placeholder="Tema, palavra-chave ou tag">
+    </label>
+    <label>
+      <span>Disciplina</span>
+      <select name="discipline_id">
+        <option value="">Todas</option>
+        {% for discipline in disciplines %}
+          <option value="{{ discipline.id }}" {% if request.args.get('discipline_id', '')|int == discipline.id %}selected{% endif %}>{{ discipline.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="button button-secondary">Filtrar</button>
+  </form>
+</section>
+
+<section class="list-grid">
+  {% for item in items %}
+    <article class="section-card">
+      <div class="section-heading">
+        <h3>{{ item.title }}</h3>
+        <div class="tag-row">
+          <span class="tag">{{ item.item_type }}</span>
+          {% if item.validated %}<span class="tag tag-success">Validado</span>{% endif %}
+          {% if item.official %}<span class="tag">Oficial</span>{% endif %}
+        </div>
+      </div>
+      <p>{{ item.discipline.name }}{% if item.topic %} • {{ item.topic.name }}{% endif %}</p>
+      <p class="preformatted">{{ item.content }}</p>
+      {% if item.tags %}
+        <p class="helper-text">Tags: {{ item.tags }}</p>
+      {% endif %}
+      {% if item.link_url %}
+        <p><a href="{{ item.link_url }}" target="_blank" rel="noreferrer">Abrir link relacionado</a></p>
+      {% endif %}
+      {% if current_user.role in ['teacher', 'admin'] and not item.validated %}
+        <form method="post" action="{{ url_for('knowledge.validate_item', item_id=item.id) }}">
+          <button type="submit" class="button button-small">Validar item</button>
+        </form>
+      {% endif %}
+    </article>
+  {% else %}
+    <p class="muted">Nenhum item encontrado.</p>
+  {% endfor %}
+</section>
+{% endblock %}

@@ -1,0 +1,242 @@
+{% extends 'base.html' %}
+{% block title %}Ticket {{ ticket.ticket_number }}{% endblock %}
+{% block content %}
+<section class="page-header">
+  <div>
+    <p class="eyebrow">{{ ticket.ticket_number }}</p>
+    <h2>{{ ticket.title }}</h2>
+    <p class="muted">{{ ticket.course.name if ticket.course else '-' }} • {{ ticket.discipline.name }} • {{ ticket.topic.name }} • {{ label_from(ticket_statuses, ticket.status) }}</p>
+  </div>
+</section>
+
+<section class="metric-grid four-up">
+  <article class="metric-card">
+    <span class="metric-label">Urgência</span>
+    <strong class="metric-value">{{ label_from(urgency_levels, ticket.urgency) }}</strong>
+  </article>
+  <article class="metric-card">
+    <span class="metric-label">Prioridade</span>
+    <strong class="metric-value">{{ ticket.priority_score }}</strong>
+  </article>
+  <article class="metric-card">
+    <span class="metric-label">Risco</span>
+    <strong class="metric-value">{{ ticket.risk_score }}</strong>
+  </article>
+  <article class="metric-card accent">
+    <span class="metric-label">Monitor sugerido</span>
+    <strong class="metric-value">{{ ticket.assigned_monitor.full_name if ticket.assigned_monitor else 'Pendente' }}</strong>
+  </article>
+</section>
+
+<section class="dashboard-grid">
+  <article class="section-card">
+    <div class="section-heading">
+      <h3>Dúvida original</h3>
+    </div>
+    <p><strong>Curso:</strong> {{ ticket.course.name if ticket.course else 'Não informado' }}</p>
+    <p><strong>Aluno:</strong> {{ ticket.student.full_name }}</p>
+    <p><strong>Tipo:</strong> {{ label_from(question_types, ticket.question_type) }}</p>
+    <p><strong>Prazo:</strong> {{ ticket.deadline.strftime('%d/%m/%Y %H:%M') if ticket.deadline else 'Não informado' }}</p>
+    <p class="preformatted">{{ ticket.description }}</p>
+    <h4>Tentativa prévia</h4>
+    <p class="preformatted">{{ ticket.prior_attempt or 'Não informada.' }}</p>
+    {% if ticket.attachments %}
+      <h4>Anexos</h4>
+      <ul class="plain-list">
+        {% for attachment in ticket.attachments %}
+          <li><a href="{{ url_for('static', filename='uploads/' + attachment.stored_filename) }}">{{ attachment.original_filename }}</a></li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </article>
+
+  {% if ticket.ai_suggestion %}
+    <article class="section-card highlighted">
+      <div class="section-heading">
+        <h3>Sugestão automática de triagem</h3>
+        <span class="tag">IA como apoio, não resposta final</span>
+      </div>
+      <p><strong>Classificação:</strong> {{ ticket.ai_suggestion.suggested_classification }}</p>
+      <p><strong>Resumo para monitor:</strong></p>
+      <p class="preformatted">{{ ticket.ai_suggestion.summary }}</p>
+      <p><strong>Resposta inicial sugerida:</strong></p>
+      <p class="preformatted">{{ ticket.ai_suggestion.suggested_response }}</p>
+      <p><strong>Materiais relacionados:</strong></p>
+      <p class="preformatted">{{ ticket.ai_suggestion.related_materials }}</p>
+      <p><strong>Perguntas de refinamento:</strong></p>
+      <p class="preformatted">{{ ticket.ai_suggestion.refinement_questions }}</p>
+      <p class="helper-text">{{ ticket.ai_suggestion.transparency_note }}</p>
+
+      {% if current_user.role == 'student' %}
+        <div class="button-row">
+          <form method="post" action="{{ url_for('tickets.ai_feedback', ticket_id=ticket.id) }}">
+            <input type="hidden" name="helpful" value="sim">
+            <button type="submit" class="button button-secondary">Ajudou</button>
+          </form>
+          <form method="post" action="{{ url_for('tickets.ai_feedback', ticket_id=ticket.id) }}">
+            <input type="hidden" name="helpful" value="nao">
+            <button type="submit" class="button button-secondary">Não ajudou</button>
+          </form>
+          <form method="post" action="{{ url_for('tickets.request_human', ticket_id=ticket.id) }}">
+            <button type="submit" class="button button-primary">Solicitar atendimento humano</button>
+          </form>
+        </div>
+      {% endif %}
+    </article>
+  {% endif %}
+</section>
+
+<section class="dashboard-grid">
+  <article class="section-card">
+    <div class="section-heading">
+      <h3>Histórico de atendimento</h3>
+    </div>
+    <div class="timeline">
+      {% for response in ticket.human_responses %}
+        <article class="timeline-item">
+          <p class="mini-meta">{{ response.created_at.strftime('%d/%m/%Y %H:%M') }} • {{ response.responder.full_name }}</p>
+          <h4>{{ label_from(intervention_types, response.intervention_type) }}</h4>
+          <p class="preformatted">{{ response.body }}</p>
+          {% if response.recommended_materials %}
+            <p><strong>Materiais recomendados:</strong> {{ response.recommended_materials }}</p>
+          {% endif %}
+          {% if response.pedagogical_notes %}
+            <p><strong>Observações pedagógicas:</strong> {{ response.pedagogical_notes }}</p>
+          {% endif %}
+          <p class="helper-text">Status após atendimento: {{ label_from(ticket_statuses, response.status_after) }} • Duração: {{ response.duration_minutes }} min</p>
+        </article>
+      {% else %}
+        <p class="muted">Ainda não há respostas humanas registradas.</p>
+      {% endfor %}
+    </div>
+  </article>
+
+  <article class="section-card">
+    <div class="section-heading">
+      <h3>Plantões relacionados</h3>
+    </div>
+    <div class="list-grid">
+      {% for shift in related_shifts %}
+        <article class="mini-card">
+          <h4>{{ shift.title }}</h4>
+          <p>{{ shift.start_at.strftime('%d/%m/%Y %H:%M') }}</p>
+          <p>{{ shift.location or 'Sem local informado' }}</p>
+          {% if current_user.role in ['monitor', 'admin'] %}
+            <form method="post" action="{{ url_for('shifts.link_ticket') }}">
+              <input type="hidden" name="shift_id" value="{{ shift.id }}">
+              <input type="hidden" name="ticket_id" value="{{ ticket.id }}">
+              <button type="submit" class="button button-small">Vincular</button>
+            </form>
+          {% endif %}
+        </article>
+      {% else %}
+        <p class="muted">Nenhum plantão disponível para esta disciplina.</p>
+      {% endfor %}
+    </div>
+  </article>
+</section>
+
+{% if current_user.role in ['monitor', 'admin'] %}
+  <section class="dashboard-grid">
+    <article class="section-card">
+      <div class="section-heading">
+        <h3>Atribuição manual</h3>
+      </div>
+      <form method="post" action="{{ url_for('tickets.assign_ticket', ticket_id=ticket.id) }}" class="form-inline">
+        <label>
+          <span>Monitor</span>
+          <select name="monitor_id">
+            {% for monitor in possible_monitors %}
+              <option value="{{ monitor.id }}" {% if ticket.assigned_monitor_id == monitor.id %}selected{% endif %}>{{ monitor.full_name }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <button type="submit" class="button button-secondary">Atribuir</button>
+      </form>
+    </article>
+
+    <article class="section-card">
+      <div class="section-heading">
+        <h3>Registrar atendimento</h3>
+      </div>
+      <form method="post" action="{{ url_for('tickets.respond', ticket_id=ticket.id) }}" class="form-grid">
+        <label>
+          <span>Tipo de intervenção</span>
+          <select name="intervention_type" required>
+            {% for value, label in intervention_types %}
+              <option value="{{ value }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label>
+          <span>Duração em minutos</span>
+          <input type="number" name="duration_minutes" min="0" value="15">
+        </label>
+        <label class="full-span">
+          <span>Resposta final do monitor</span>
+          <textarea name="body" rows="6" required></textarea>
+        </label>
+        <label class="full-span">
+          <span>Materiais recomendados</span>
+          <textarea name="recommended_materials" rows="3"></textarea>
+        </label>
+        <label class="full-span">
+          <span>Observações pedagógicas</span>
+          <textarea name="pedagogical_notes" rows="3"></textarea>
+        </label>
+        <label>
+          <span>Status após atendimento</span>
+          <select name="status_after" required>
+            <option value="respondida">Respondida</option>
+            <option value="parcialmente_resolvida">Parcialmente resolvida</option>
+            <option value="resolvida">Resolvida</option>
+            <option value="encaminhada_professor">Encaminhada ao professor</option>
+          </select>
+        </label>
+        <button type="submit" class="button button-primary">Salvar atendimento</button>
+      </form>
+    </article>
+  </section>
+{% endif %}
+
+{% if current_user.role == 'student' and ticket.human_responses %}
+  <section class="section-card">
+    <div class="section-heading">
+      <h3>Avaliação do atendimento</h3>
+    </div>
+    <form method="post" action="{{ url_for('tickets.feedback', ticket_id=ticket.id) }}" class="form-grid two-columns">
+      <label>
+        <span>A resposta da IA ajudou?</span>
+        <select name="ai_helpful">
+          <option value="">Não informar</option>
+          <option value="sim">Sim</option>
+          <option value="nao">Não</option>
+        </select>
+      </label>
+      <label>
+        <span>Nota do monitor</span>
+        <select name="monitor_rating">
+          <option value="">Selecione</option>
+          <option value="1">1</option>
+          <option value="2">2</option>
+          <option value="3">3</option>
+          <option value="4">4</option>
+          <option value="5">5</option>
+        </select>
+      </label>
+      <label>
+        <span>O problema foi resolvido?</span>
+        <select name="resolved">
+          <option value="sim">Sim</option>
+          <option value="nao">Não</option>
+        </select>
+      </label>
+      <label class="full-span">
+        <span>Comentário</span>
+        <textarea name="comment" rows="3"></textarea>
+      </label>
+      <button type="submit" class="button button-primary">Enviar avaliação</button>
+    </form>
+  </section>
+{% endif %}
+{% endblock %}

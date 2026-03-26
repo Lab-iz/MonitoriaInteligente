@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Cadastro | Monitoria Inteligente{% endblock %}
+{% block content %}
+<section class="auth-shell">
+  <article class="auth-card wide">
+    <p class="eyebrow">Cadastro inicial</p>
+    <h2>Criar acesso</h2>
+    <form method="post" class="form-grid two-columns">
+      <label>
+        <span>Nome completo</span>
+        <input type="text" name="full_name" required>
+      </label>
+      <label>
+        <span>Nome de usuário</span>
+        <input type="text" name="username" required>
+      </label>
+      <label>
+        <span>E-mail</span>
+        <input type="email" name="email" required>
+      </label>
+      <label>
+        <span>Perfil</span>
+        <select name="role" required>
+          {% for value, label in user_roles %}
+            <option value="{{ value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>
+        <span>Senha</span>
+        <input type="password" name="password" required>
+      </label>
+      <label>
+        <span>Turma</span>
+        <select name="class_group_id">
+          <option value="">Selecione</option>
+          {% for group in class_groups %}
+            <option value="{{ group.id }}">{{ group.name }} - {{ group.semester_label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <button type="submit" class="button button-primary">Cadastrar</button>
+    </form>
+  </article>
+</section>
+{% endblock %}
