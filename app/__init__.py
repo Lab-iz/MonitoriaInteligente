@@ -52,7 +52,17 @@ def ensure_existing_schema(app):
         user_columns = {column["name"] for column in inspector.get_columns("users")}
         if "phone" not in user_columns:
             db.session.execute(text("ALTER TABLE users ADD COLUMN phone VARCHAR(30)"))
-            db.session.commit()
+        if "bio" not in user_columns:
+            db.session.execute(text("ALTER TABLE users ADD COLUMN bio TEXT"))
+        if "last_login_at" not in user_columns:
+            db.session.execute(text("ALTER TABLE users ADD COLUMN last_login_at DATETIME"))
+        if "created_at" not in user_columns:
+            db.session.execute(text("ALTER TABLE users ADD COLUMN created_at DATETIME"))
+        if "updated_at" not in user_columns:
+            db.session.execute(text("ALTER TABLE users ADD COLUMN updated_at DATETIME"))
+        if "is_active_user" not in user_columns:
+            db.session.execute(text("ALTER TABLE users ADD COLUMN is_active_user BOOLEAN DEFAULT 1 NOT NULL"))
+        db.session.commit()
 
         from app.models import MonitorTopic
 

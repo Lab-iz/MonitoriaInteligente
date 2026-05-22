@@ -163,22 +163,24 @@ def admin_dashboard_data():
     open_tickets = QuestionTicket.query.filter(
         QuestionTicket.status.in_(["aberta", "triada_ia", "aguardando_monitor", "em_atendimento"])
     ).count()
-    avg_first_response = (
-        db.session.query(
-            func.avg(
-                func.julianday(QuestionTicket.first_response_at) - func.julianday(QuestionTicket.created_at)
-            )
-        )
-        .filter(QuestionTicket.first_response_at.isnot(None))
-        .scalar()
-    ) or 0
-    avg_resolution = (
-        db.session.query(
-            func.avg(func.julianday(QuestionTicket.resolved_at) - func.julianday(QuestionTicket.created_at))
-        )
-        .filter(QuestionTicket.resolved_at.isnot(None))
-        .scalar()
-    ) or 0
+
+    first_response_tickets = QuestionTicket.query.filter(
+        QuestionTicket.first_response_at.isnot(None),
+        QuestionTicket.created_at.isnot(None),
+    ).all()
+    resolved_tickets = QuestionTicket.query.filter(
+        QuestionTicket.resolved_at.isnot(None),
+        QuestionTicket.created_at.isnot(None),
+    ).all()
+
+    first_response_hours = [
+        (ticket.first_response_at - ticket.created_at).total_seconds() / 3600
+        for ticket in first_response_tickets
+    ]
+    resolution_hours = [
+        (ticket.resolved_at - ticket.created_at).total_seconds() / 3600
+        for ticket in resolved_tickets
+    ]
 
     discipline_load = (
         db.session.query(Discipline.name, func.count(QuestionTicket.id))
@@ -206,8 +208,12 @@ def admin_dashboard_data():
         "total_users": total_users,
         "total_tickets": total_tickets,
         "open_tickets": open_tickets,
-        "avg_first_response_hours": round(float(avg_first_response) * 24, 1),
-        "avg_resolution_hours": round(float(avg_resolution) * 24, 1),
+        "avg_first_response_hours": round(sum(first_response_hours) / len(first_response_hours), 1)
+        if first_response_hours
+        else 0,
+        "avg_resolution_hours": round(sum(resolution_hours) / len(resolution_hours), 1)
+        if resolution_hours
+        else 0,
         "discipline_load": [{"label": label, "value": value} for label, value in discipline_load],
         "coverage": [{"label": label, "value": value} for label, value in coverage],
         "alerts": active_risk_alerts(),
