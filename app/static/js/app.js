@@ -107,7 +107,33 @@ function hydrateTopicFilter() {
   });
 }
 
+function hydrateRoleFields() {
+  document.querySelectorAll("[data-role-form]").forEach((form) => {
+    const roleSelect = form.querySelector("[data-role-select]");
+    const roleFields = form.querySelectorAll("[data-role-field]");
+    if (!roleSelect || !roleFields.length) return;
+
+    const syncRoleFields = () => {
+      const selectedRole = roleSelect.value;
+      roleFields.forEach((field) => {
+        const visible = field.dataset.roleField.split(" ").includes(selectedRole);
+        field.hidden = !visible;
+        field.querySelectorAll("input, select, textarea").forEach((input) => {
+          input.disabled = !visible;
+          if (input.name === "phone") {
+            input.required = visible && selectedRole === "monitor";
+          }
+        });
+      });
+    };
+
+    roleSelect.addEventListener("change", syncRoleFields);
+    syncRoleFields();
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   hydrateCharts();
   hydrateTopicFilter();
+  hydrateRoleFields();
 });

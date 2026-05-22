@@ -74,6 +74,7 @@ def management():
                 username=request.form["username"].strip(),
                 email=request.form["email"].strip(),
                 role=request.form["role"],
+                phone=request.form.get("phone", "").strip() or None,
                 last_login_at=utcnow(),
             )
             user.set_password(request.form["password"])

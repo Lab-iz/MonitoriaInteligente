@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from app.models import Discipline, DisciplineMembership, QuestionTicket
+from app.models import Discipline, DisciplineMembership, MonitorTopic, QuestionTicket
 from app.utils.time import utcnow
 
 
@@ -45,11 +45,7 @@ def calculate_priority(ticket):
 
 
 def suggest_monitor(ticket):
-    memberships = DisciplineMembership.query.filter_by(
-        discipline_id=ticket.discipline_id,
-        relationship_type="monitor",
-    ).all()
-
+    memberships = monitor_memberships_for_ticket(ticket)
     if not memberships:
         return None
 
@@ -73,7 +69,8 @@ def suggest_monitor(ticket):
                 and now <= shift.start_at <= now + timedelta(days=7)
             ]
         )
-        score = (open_assigned * 3) - upcoming_shift_bonus
+        topic_bonus = 1 if monitor_can_handle_topic(monitor, ticket.topic_id) else 0
+        score = (open_assigned * 3) - upcoming_shift_bonus - (topic_bonus * 4)
         if membership.class_group_id and ticket.class_group_id == membership.class_group_id:
             score -= 2
         candidates.append((score, monitor))
@@ -82,10 +79,49 @@ def suggest_monitor(ticket):
     return candidates[0][1] if candidates else None
 
 
+def monitor_can_handle_topic(monitor, topic_id):
+    if not topic_id:
+        return False
+    return any(capability.topic_id == topic_id for capability in monitor.monitor_topics)
+
+
+def monitor_topic_ids(user):
+    return {capability.topic_id for capability in user.monitor_topics}
+
+
+def monitor_memberships_for_ticket(ticket):
+    memberships = DisciplineMembership.query.filter_by(
+        discipline_id=ticket.discipline_id,
+        relationship_type="monitor",
+    ).all()
+
+    topic_monitor_ids = {
+        capability.monitor_id
+        for capability in MonitorTopic.query.filter_by(topic_id=ticket.topic_id).all()
+    }
+    if topic_monitor_ids:
+        memberships = [
+            membership for membership in memberships if membership.user_id in topic_monitor_ids
+        ]
+
+    return sorted(memberships, key=lambda membership: membership.user.full_name.lower())
+
+
+def monitor_candidates_for_ticket(ticket):
+    return [membership.user for membership in monitor_memberships_for_ticket(ticket)]
+
+
 def build_prioritized_queue(user=None, course_id=None, discipline_id=None, topic_id=None, status=None):
     query = QuestionTicket.query.filter(
         QuestionTicket.status.in_(
-            ["triada_ia", "aguardando_monitor", "em_atendimento", "respondida", "parcialmente_resolvida"]
+            [
+                "triada_ia",
+                "aguardando_monitor",
+                "em_atendimento",
+                "respondida",
+                "parcialmente_resolvida",
+                "encaminhada_professor",
+            ]
         )
     )
 
@@ -118,6 +154,10 @@ def build_prioritized_queue(user=None, course_id=None, discipline_id=None, topic
             and ticket.course
             and ticket.course.id in allowed_courses
         ]
+
+        allowed_topic_ids = monitor_topic_ids(user)
+        if allowed_topic_ids:
+            tickets = [ticket for ticket in tickets if ticket.topic_id in allowed_topic_ids]
 
     def deadline_key(ticket):
         return ticket.deadline or datetime.max

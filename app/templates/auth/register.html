@@ -5,7 +5,7 @@
   <article class="auth-card wide">
     <p class="eyebrow">Cadastro inicial</p>
     <h2>Criar acesso</h2>
-    <form method="post" class="form-grid two-columns">
+    <form method="post" class="form-grid two-columns" data-role-form>
       <label>
         <span>Nome completo</span>
         <input type="text" name="full_name" required>
@@ -18,9 +18,13 @@
         <span>E-mail</span>
         <input type="email" name="email" required>
       </label>
+      <label data-role-field="monitor">
+        <span>Telefone de contato</span>
+        <input type="tel" name="phone" autocomplete="tel">
+      </label>
       <label>
         <span>Perfil</span>
-        <select name="role" required>
+        <select name="role" required data-role-select>
           {% for value, label in user_roles %}
             <option value="{{ value }}">{{ label }}</option>
           {% endfor %}
@@ -30,7 +34,7 @@
         <span>Senha</span>
         <input type="password" name="password" required>
       </label>
-      <label>
+      <label data-role-field="student">
         <span>Turma</span>
         <select name="class_group_id">
           <option value="">Selecione</option>
@@ -39,6 +43,28 @@
           {% endfor %}
         </select>
       </label>
+      <div class="full-span" data-role-field="teacher">
+        <span class="form-section-label">Disciplinas do professor</span>
+        <div class="checkbox-grid">
+          {% for discipline in disciplines %}
+            <label class="choice-card">
+              <input type="checkbox" name="discipline_ids" value="{{ discipline.id }}">
+              <span>{{ discipline.course.name }} - {{ discipline.name }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="full-span" data-role-field="monitor">
+        <span class="form-section-label">Assuntos que pode ministrar</span>
+        <div class="checkbox-grid">
+          {% for topic in topics %}
+            <label class="choice-card">
+              <input type="checkbox" name="topic_ids" value="{{ topic.id }}">
+              <span>{{ topic.discipline.name }} - {{ topic.name }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
       <button type="submit" class="button button-primary">Cadastrar</button>
     </form>
   </article>

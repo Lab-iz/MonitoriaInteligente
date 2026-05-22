@@ -27,6 +27,7 @@ class User(UserMixin, TimestampMixin, db.Model):
     role = db.Column(db.String(20), nullable=False, default="student", index=True)
     password_hash = db.Column(db.String(255), nullable=False)
     is_active_user = db.Column(db.Boolean, default=True, nullable=False)
+    phone = db.Column(db.String(30))
     bio = db.Column(db.Text)
     last_login_at = db.Column(db.DateTime)
 
@@ -58,6 +59,11 @@ class User(UserMixin, TimestampMixin, db.Model):
         foreign_keys="KnowledgeBaseItem.suggested_by_id",
     )
     monitor_shifts = db.relationship("MonitorShift", back_populates="monitor")
+    monitor_topics = db.relationship(
+        "MonitorTopic",
+        back_populates="monitor",
+        cascade="all, delete-orphan",
+    )
     alerts = db.relationship(
         "RiskAlert",
         back_populates="student",
@@ -151,6 +157,25 @@ class Topic(TimestampMixin, db.Model):
     discipline = db.relationship("Discipline", back_populates="topics")
     tickets = db.relationship("QuestionTicket", back_populates="topic")
     knowledge_items = db.relationship("KnowledgeBaseItem", back_populates="topic")
+    monitor_capabilities = db.relationship(
+        "MonitorTopic",
+        back_populates="topic",
+        cascade="all, delete-orphan",
+    )
+
+
+class MonitorTopic(TimestampMixin, db.Model):
+    __tablename__ = "monitor_topics"
+    __table_args__ = (
+        db.UniqueConstraint("monitor_id", "topic_id", name="uq_monitor_topic"),
+    )
+
+    id = db.Column(db.Integer, primary_key=True)
+    monitor_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    topic_id = db.Column(db.Integer, db.ForeignKey("topics.id"), nullable=False)
+
+    monitor = db.relationship("User", back_populates="monitor_topics")
+    topic = db.relationship("Topic", back_populates="monitor_capabilities")
 
 
 class DisciplineMembership(TimestampMixin, db.Model):

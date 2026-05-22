@@ -19,6 +19,7 @@
         <span class="tag">{{ shift.discipline.name }}</span>
       </div>
       <p><strong>Monitor:</strong> {{ shift.monitor.full_name }}</p>
+      <p><strong>Telefone:</strong> {{ shift.monitor.phone or 'Não informado' }}</p>
       <p><strong>Início:</strong> {{ shift.start_at.strftime('%d/%m/%Y %H:%M') }}</p>
       <p><strong>Fim:</strong> {{ shift.end_at.strftime('%d/%m/%Y %H:%M') }}</p>
       <p><strong>Local:</strong> {{ shift.location or 'Não informado' }}</p>

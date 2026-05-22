@@ -9,6 +9,7 @@ from app.models import (
     DisciplineMembership,
     KnowledgeBaseItem,
     MonitorShift,
+    MonitorTopic,
     QuestionTicket,
     Topic,
     User,
@@ -19,8 +20,8 @@ from app.services.triage_service import run_initial_triage
 from app.utils.time import utcnow
 
 
-def _create_user(full_name, username, email, role):
-    user = User(full_name=full_name, username=username, email=email, role=role)
+def _create_user(full_name, username, email, role, phone=None):
+    user = User(full_name=full_name, username=username, email=email, role=role, phone=phone)
     user.set_password(Config.SEED_DEFAULT_PASSWORD)
     db.session.add(user)
     return user
@@ -59,8 +60,8 @@ def seed_demo_data():
     admin = _create_user("Coordenação Pedagógica", "admin", "admin@monitoria.local", "admin")
     professor_algo = _create_user("Prof. Helena Ramos", "helena", "helena@monitoria.local", "teacher")
     professor_calc = _create_user("Prof. Caio Nunes", "caio", "caio@monitoria.local", "teacher")
-    monitor_lia = _create_user("Lia Monteiro", "lia", "lia@monitoria.local", "monitor")
-    monitor_otavio = _create_user("Otávio Braga", "otavio", "otavio@monitoria.local", "monitor")
+    monitor_lia = _create_user("Lia Monteiro", "lia", "lia@monitoria.local", "monitor", "(11) 90000-0101")
+    monitor_otavio = _create_user("Otávio Braga", "otavio", "otavio@monitoria.local", "monitor", "(11) 90000-0202")
     estudante_ana = _create_user("Ana Souza", "ana", "ana@monitoria.local", "student")
     estudante_bruno = _create_user("Bruno Lima", "bruno", "bruno@monitoria.local", "student")
     estudante_clara = _create_user("Clara Reis", "clara", "clara@monitoria.local", "student")
@@ -80,6 +81,16 @@ def seed_demo_data():
         DisciplineMembership(user=estudante_clara, discipline=estruturas, class_group=turma_a, relationship_type="student"),
     ]
     db.session.add_all(memberships)
+
+    monitor_topics = [
+        MonitorTopic(monitor=monitor_lia, topic=topicos["variaveis"]),
+        MonitorTopic(monitor=monitor_lia, topic=topicos["repeticao"]),
+        MonitorTopic(monitor=monitor_otavio, topic=topicos["lista"]),
+        MonitorTopic(monitor=monitor_otavio, topic=topicos["pilha"]),
+        MonitorTopic(monitor=monitor_otavio, topic=topicos["limite"]),
+        MonitorTopic(monitor=monitor_otavio, topic=topicos["derivada"]),
+    ]
+    db.session.add_all(monitor_topics)
 
     kb_items = [
         KnowledgeBaseItem(

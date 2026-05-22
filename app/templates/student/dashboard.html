@@ -73,6 +73,7 @@
       <article class="mini-card">
         <h4>{{ shift.title }}</h4>
         <p>{{ shift.discipline.name }}</p>
+        <p>{{ shift.monitor.full_name }}{% if shift.monitor.phone %} - {{ shift.monitor.phone }}{% endif %}</p>
         <p>{{ shift.start_at.strftime('%d/%m/%Y %H:%M') }} - {{ shift.location or 'Local a definir' }}</p>
       </article>
     {% else %}

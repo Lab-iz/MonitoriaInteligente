@@ -2,6 +2,7 @@ from pathlib import Path
 
 from flask import Flask, redirect, url_for
 from flask_login import current_user
+from sqlalchemy import inspect, text
 
 from config import config_by_name
 from app.extensions import db, login_manager
@@ -29,8 +30,30 @@ def create_app(config_name="default"):
     register_cli(app)
     register_context_processors(app)
     register_error_handlers(app)
+    ensure_existing_schema(app)
 
     return app
+
+
+def ensure_existing_schema(app):
+    """Apply tiny compatibility upgrades for the local SQLite database."""
+    if not app.config["SQLALCHEMY_DATABASE_URI"].startswith("sqlite:///"):
+        return
+
+    with app.app_context():
+        inspector = inspect(db.engine)
+        table_names = set(inspector.get_table_names())
+        if "users" not in table_names:
+            return
+
+        user_columns = {column["name"] for column in inspector.get_columns("users")}
+        if "phone" not in user_columns:
+            db.session.execute(text("ALTER TABLE users ADD COLUMN phone VARCHAR(30)"))
+            db.session.commit()
+
+        from app.models import MonitorTopic
+
+        MonitorTopic.__table__.create(bind=db.engine, checkfirst=True)
 
 
 def register_blueprints(app):

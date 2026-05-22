@@ -6,13 +6,16 @@ from app.models import (
     ClassGroup,
     Course,
     Discipline,
-    DisciplineMembership,
     MonitorShift,
     QuestionTicket,
     Topic,
     User,
 )
-from app.services.assignment_service import build_prioritized_queue
+from app.services.assignment_service import (
+    build_prioritized_queue,
+    calculate_priority,
+    monitor_candidates_for_ticket,
+)
 from app.services.feedback_service import save_feedback
 from app.services.ticket_service import (
     create_ticket,
@@ -152,13 +155,7 @@ def ticket_detail(ticket_id):
         .order_by(MonitorShift.start_at.asc())
         .all()
     )
-    possible_monitors = [
-        membership.user
-        for membership in DisciplineMembership.query.filter_by(
-            discipline_id=ticket.discipline_id,
-            relationship_type="monitor",
-        ).all()
-    ]
+    possible_monitors = monitor_candidates_for_ticket(ticket)
 
     return render_template(
         "tickets/detail.html",
@@ -197,13 +194,18 @@ def request_human(ticket_id):
 
 @tickets_bp.route("/<int:ticket_id>/assign", methods=["POST"])
 @login_required
-@roles_required("monitor", "admin")
+@roles_required("monitor", "teacher", "admin")
 def assign_ticket(ticket_id):
     ticket = db.session.get(QuestionTicket, ticket_id)
-    if not ticket:
+    if not ticket or not _user_can_access_ticket(ticket, current_user):
         return redirect(url_for("tickets.queue"))
 
     monitor_id = int(request.form["monitor_id"]) if request.form.get("monitor_id") else current_user.id
+    candidate_ids = {monitor.id for monitor in monitor_candidates_for_ticket(ticket)}
+    if candidate_ids and monitor_id not in candidate_ids:
+        flash("Monitor selecionado não atende esse assunto.", "danger")
+        return redirect(url_for("tickets.ticket_detail", ticket_id=ticket.id))
+
     ticket.assigned_monitor_id = monitor_id
     ticket.status = "aguardando_monitor"
     db.session.commit()
@@ -211,9 +213,31 @@ def assign_ticket(ticket_id):
     return redirect(url_for("tickets.ticket_detail", ticket_id=ticket.id))
 
 
+@tickets_bp.route("/<int:ticket_id>/choose-monitor", methods=["POST"])
+@login_required
+@roles_required("student")
+def choose_monitor(ticket_id):
+    ticket = db.session.get(QuestionTicket, ticket_id)
+    if not ticket or ticket.student_id != current_user.id:
+        return redirect(url_for("student.dashboard"))
+
+    monitor_id = int(request.form["monitor_id"]) if request.form.get("monitor_id") else None
+    candidate_ids = {monitor.id for monitor in monitor_candidates_for_ticket(ticket)}
+    if not monitor_id or monitor_id not in candidate_ids:
+        flash("Selecione um monitor disponível para esse assunto.", "danger")
+        return redirect(url_for("tickets.ticket_detail", ticket_id=ticket.id))
+
+    ticket.assigned_monitor_id = monitor_id
+    ticket.status = "aguardando_monitor"
+    calculate_priority(ticket)
+    db.session.commit()
+    flash("Monitor escolhido para atendimento humano.", "success")
+    return redirect(url_for("tickets.ticket_detail", ticket_id=ticket.id))
+
+
 @tickets_bp.route("/<int:ticket_id>/respond", methods=["POST"])
 @login_required
-@roles_required("monitor", "admin")
+@roles_required("monitor", "teacher", "admin")
 def respond(ticket_id):
     ticket = db.session.get(QuestionTicket, ticket_id)
     if not ticket or not _user_can_access_ticket(ticket, current_user):

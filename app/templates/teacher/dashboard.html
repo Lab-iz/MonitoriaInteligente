@@ -6,7 +6,10 @@
     <p class="eyebrow">Painel docente</p>
     <h2>Recorrência por conteúdo e apoio à monitoria</h2>
   </div>
-  <a class="button button-primary" href="{{ url_for('reports.index') }}">Exportar relatórios</a>
+  <div class="button-row">
+    <a class="button button-secondary" href="{{ url_for('tickets.queue') }}">Abrir fila</a>
+    <a class="button button-primary" href="{{ url_for('reports.index') }}">Exportar relatórios</a>
+  </div>
 </section>
 
 <section class="metric-grid">

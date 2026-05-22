@@ -22,4 +22,4 @@ def index():
 @roles_required("teacher", "admin")
 def export(report_type):
     snapshot = generate_csv_report(report_type, current_user)
-    return send_file(snapshot.csv_path, as_attachment=True)
+    return send_file(snapshot.csv_path, as_attachment=True, mimetype="text/csv")
