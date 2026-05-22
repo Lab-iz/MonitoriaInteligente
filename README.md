@@ -129,6 +129,31 @@ python run.py
 flask --app run.py seed-db
 ```
 
+## Deploy no Render
+
+O repositorio inclui um `render.yaml` para deploy como Web Service Python.
+
+Configuracao usada pelo Blueprint:
+
+- Build Command: `pip install -r requirements.txt`
+- Start Command: `gunicorn run:app`
+- Health Check Path: `/healthz`
+- `FLASK_CONFIG=production`
+- `AUTO_INIT_DB=true`
+- `SEED_DEMO_DATA=true`
+- `SQLITE_DB_PATH=/tmp/monitoria.db`
+- `UPLOAD_FOLDER=/tmp/monitoria-uploads`
+- `REPORT_FOLDER=/tmp/monitoria-reports`
+
+No primeiro deploy, a aplicacao cria as tabelas automaticamente e popula os dados de demonstracao se o banco estiver vazio.
+
+Se preferir configurar manualmente no painel do Render, use os mesmos comandos acima e crie uma variavel `SECRET_KEY` com valor secreto.
+
+Por padrao, o deploy usa SQLite no `/tmp` do servico para evitar erro de escrita no diretorio do deploy. Sem disco persistente ou banco gerenciado, o Render pode perder esses arquivos em reinicios ou redeploys. Para manter dados reais, use uma destas opcoes:
+
+- Render Postgres: configure `DATABASE_URL` no servico.
+- Disco persistente pago: configure `SQLITE_DB_PATH`, `UPLOAD_FOLDER` e `REPORT_FOLDER` apontando para o caminho montado.
+
 ## Perfis de teste
 
 O seed cria perfis de todos os papéis institucionais:

@@ -2,6 +2,12 @@ from app.extensions import db
 from app.models import DisciplineMembership, MonitorTopic, QuestionTicket, User
 
 
+def test_health_check(client):
+    response = client.get("/healthz")
+    assert response.status_code == 200
+    assert response.get_json() == {"status": "ok"}
+
+
 def test_login_flow(client):
     response = client.post(
         "/auth/login",

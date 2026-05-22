@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 from flask import Flask, redirect, url_for
@@ -16,7 +17,8 @@ from app.utils.constants import (
 )
 
 
-def create_app(config_name="default"):
+def create_app(config_name=None):
+    config_name = config_name or os.environ.get("FLASK_CONFIG", os.environ.get("APP_ENV", "default"))
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(config_by_name.get(config_name, config_by_name["default"]))
 
@@ -31,6 +33,7 @@ def create_app(config_name="default"):
     register_context_processors(app)
     register_error_handlers(app)
     ensure_existing_schema(app)
+    bootstrap_database(app)
 
     return app
 
@@ -54,6 +57,18 @@ def ensure_existing_schema(app):
         from app.models import MonitorTopic
 
         MonitorTopic.__table__.create(bind=db.engine, checkfirst=True)
+
+
+def bootstrap_database(app):
+    if not app.config.get("AUTO_INIT_DB"):
+        return
+
+    with app.app_context():
+        db.create_all()
+        if app.config.get("SEED_DEMO_DATA"):
+            from app.services.seed_service import seed_demo_data
+
+            seed_demo_data()
 
 
 def register_blueprints(app):

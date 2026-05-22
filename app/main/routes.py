@@ -10,3 +10,8 @@ def index():
     if current_user.is_authenticated:
         return redirect(url_for(current_user.dashboard_endpoint))
     return render_template("main/index.html")
+
+
+@main_bp.route("/healthz")
+def healthz():
+    return {"status": "ok"}

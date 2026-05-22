@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 
-from config import Config
+from flask import current_app
+
 from app.extensions import db
 from app.models import (
     ClassGroup,
@@ -22,7 +23,7 @@ from app.utils.time import utcnow
 
 def _create_user(full_name, username, email, role, phone=None):
     user = User(full_name=full_name, username=username, email=email, role=role, phone=phone)
-    user.set_password(Config.SEED_DEFAULT_PASSWORD)
+    user.set_password(current_app.config["SEED_DEFAULT_PASSWORD"])
     db.session.add(user)
     return user
 
